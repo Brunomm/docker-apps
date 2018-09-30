@@ -1,0 +1,72 @@
+version: '3'
+services:
+  app:
+    build:
+      dockerfile: ./docker/Dockerfile
+      context: .
+    command: /wait-for-postgres.sh && bundle exec puma -C config/puma.rb
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST: postgres-95
+    networks:
+      - postgresql-network
+    volumes:
+      - bundle_cache:/bundle
+      - ".:/usr/src/app"
+    ports:
+      - 3000:3000
+    depends_on:
+      - db
+    links:
+      - db
+
+  db:
+    image: 'postgres:9.5'
+    container_name: postgres-95
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+    networks:
+      - postgresql-network
+    volumes:
+      - 'postgres:/var/lib/postgresql/data'
+
+networks:
+  postgresql-network:
+    driver: bridge
+
+volumes:
+  bundle_cache:
+  postgres:
+
+  # duobr-web-app:
+  #   build:
+  #     context: .
+  #     dockerfile: docker-rails-app.dockerfile
+  #   image: duobr-web-app
+  #   volumes:
+  #     - .:/usr/src/app
+  #   ports:
+  #     - "3000:3000"
+  #     - "22"
+  #   depends_on:
+  #     - 'db'
+  #   links:
+  #     - db
+  #   command: bundle exec rails s -p 3000 -b '0.0.0.0'
+
+  # webpacker:
+  #   build:
+  #     context: .
+  #     dockerfile: webpacker.dockerfile
+  #   image: duobr-webpacker
+  #   command: ./bin/webpack-dev-server --host localhost --inline false --hot false
+  #   environment:
+  #     - NODE_ENV=development
+  #     - RAILS_ENV=development
+  #     - WEBPACKER_DEV_SERVER_HOST=0.0.0.0
+  #   volumes:
+  #     - .:/usr/src/app/duobr
+  #   ports:
+  #     - 3035:3035
